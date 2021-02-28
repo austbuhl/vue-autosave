@@ -25,6 +25,7 @@
       <input type="tel" name="phone" v-model="formData.phone" />
       <button type="submit">Submit</button>
     </form>
+    <button @click="revertToOriginal">Revert to original data</button>
   </div>
 </template>
 
@@ -38,7 +39,10 @@ export default {
     return {
       firebaseData: null,
       formData: {},
-      state: 'loading'
+      state: 'loading',
+      errorMessage: '',
+
+      originalData: null
     }
   },
   firestore() {
@@ -62,7 +66,11 @@ export default {
     },
     debounceUpdate: debounce(function() {
       this.updateFirebase()
-    }, 1500)
+    }, 1500),
+    revertToOriginal() {
+      this.state = 'revoked'
+      this.formData = { ...this.originalData }
+    }
   },
   created: async function() {
     const docRef = db.doc(documentPath)
@@ -70,8 +78,10 @@ export default {
     let data = (await docRef.get()).data()
     if (!data) {
       data = { name: '', phone: '', email: '' }
+      docRef.set(data)
     }
     this.formData = data
+    this.originalData = { ...data }
     this.state = 'synced'
   }
 }
